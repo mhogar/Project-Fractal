@@ -1,5 +1,4 @@
 .story-segment {
-	background-color: lavender !important;
 	margin-top: 3em !important;
 }
 
@@ -9,4 +8,12 @@
 
 .completion-bar {
 	transition-duration: 300ms !important;
+}
+
+.task-todo {
+	background-color: lightgoldenrodyellow !important;
+}
+
+.task-complete {
+	background-color: palegreen !important;
 }
