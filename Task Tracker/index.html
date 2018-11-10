@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Task Tracker</title>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+	<link href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div id="app" class="ui container">
+		<Story v-for="story in stories" v-bind:story="story" />
+
+		<div class="ui accordion">
+		  <div class="active title">
+		    <i class="dropdown icon"></i>
+		    What is a dog?
+		  </div>
+		  <div class="active content">
+		    <p>A dog is a type of domesticated animal. Known for its loyalty and faithfulness, it can be found as a welcome guest in many households across the world.</p>
+		  </div>
+		</div>
+
+	</div>
+	<script src="app.js"></script>
+</body>
+</html>

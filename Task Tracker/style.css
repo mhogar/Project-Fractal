@@ -1,0 +1,12 @@
+.story-segment {
+	background-color: lavender !important;
+	margin-top: 3em !important;
+}
+
+.story-segment-header {
+	background-color: lavender !important;
+}
+
+.completion-bar {
+	transition-duration: 300ms !important;
+}
