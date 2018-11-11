@@ -17,3 +17,12 @@
 .task-complete {
 	background-color: palegreen !important;
 }
+
+.new-task:hover {
+	cursor: pointer;
+	background-color: lightblue;
+}
+
+.edit-select:hover {
+	cursor: pointer;
+}

@@ -4,13 +4,23 @@ var taskComponent = {
 						<div class="ui segments">
 							<div v-bind:class="'ui segment ' + (task.completed ? 'green task-complete' : 'yellow task-todo')">
 								<div class="ui grid">
-									<div class="left floated seven wide column">
-										<i class="thumbtack icon"></i>{{task.name}}
+									<div class="left floated eleven wide column">
+										<i class="thumbtack icon"></i> {{task.name}}
 									</div>
-									<div class="right floated three wide column">
-										<div class="ui checkbox">
+									<div class="right floated two wide column">
+										<div class="ui checkbox right floated">
 											<input type="checkbox" v-on:click="$parent.$parent.toggleDone($event, task.id)" v-bind:checked="task.completed">
 											<label>Completed</label>
+										</div>
+									</div>
+									<div class="left floated one wide column">
+										<div class="ui icon small buttons">
+										  <button class="ui icon circular blue button" v-on:click="$parent.$parent.editTask($event, task.id)">
+										    <i class="pencil icon"></i>
+										  </button>
+										  <button class="ui icon circular red button" v-on:click="$parent.$parent.deleteTask($event, task.id)">
+										    <i class="trash icon"></i>
+										  </button>
 										</div>
 									</div>
 								</div>
@@ -37,7 +47,6 @@ var storyComponent = {
 											<div class="right floated four wide column">
 												<div class="ui purple progress">
 												  <div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id">
-												    <div class="progress"></div>
 												  </div>
 											   	<div class="label">{{story.percent}}% Completed</div>
 												</div>
@@ -45,10 +54,10 @@ var storyComponent = {
 										</div>
 									</div>
 									<div class="content active">
-										<Task v-for="task in $parent.getStoryTasks(story.id)" v-bind:task="task" />
+										<Task v-for="task in $parent.getStoryTasks(story.id)" :key="task.id" v-bind:task="task"></Task>
 										<div class="ui segments">
-											<div class="ui segment">
-												<i class="plus circle icon"></i>Add a new task
+											<div class="ui segment new-task" v-on:click="$parent.addNewTask($event, story.id)">
+												<i class="plus circle icon"></i> Add a new task
 											</div>
 										</div>
 									</div>
@@ -94,7 +103,7 @@ var storyData = [
 				let story = stories.find(item => item.id === storyId);
 				if (story) {
 					tasks = getStoryTasks(story.id);
-					story.percent = tasks.filter(task => task.completed === true).length / tasks.length * 100;
+					story.percent = Math.round(tasks.filter(task => task.completed === true).length / tasks.length * 100 *100) / 100;
 
 					let progressBar = $('#story-progress-bar-' + story.id);
 					progressBar.css('width', story.percent + '%');
@@ -113,7 +122,7 @@ var storyData = [
 			
 		},
 		toggleDone: function (event, id) {
-			event.stopImmediatePropagation();
+			event.preventDefault();
 
 			let task = this.tasks.find(item => item.id === id);
 			if (task) {
@@ -121,6 +130,24 @@ var storyData = [
 
 				this.updateProgressBars(task.storyId);
 			}
+		},
+		addNewTask: function(event, storyId) {
+			let nextId = (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1;
+
+			taskData.push({
+				id: nextId,
+				storyId: storyId,
+				name: "New Task",
+				completed: false
+			});
+
+			this.updateProgressBars(storyId);
+		},
+		editTask: function(event, id) {
+			console.log('edit clicked: ' + id);
+		},
+		deleteTask: function(event, id) {
+			console.log('delete clicked: ' + id);
 		}
 	},
 	mounted: function() {
