@@ -4,10 +4,19 @@ var taskComponent = {
 						<div class="ui segments">
 							<div v-bind:class="'ui segment ' + (task.completed ? 'green task-complete' : 'yellow task-todo')">
 								<div class="ui grid">
-									<div class="left floated eleven wide column">
-										<i class="thumbtack icon"></i> {{task.name}}
+									<div class="left floated twelve wide column">
+										<div v-if="$parent.$parent.state !== 'edit'">
+											<i class="thumbtack icon"></i> {{task.name}}
+										</div>
+										<form class="ui form" v-on:submit.prevent="$parent.$parent.state === 'edit' && $parent.$parent.updateTask($event, $parent.$parent.selectedTask.id)" v-if="$parent.$parent.state === 'edit' && $parent.$parent.selectedTask.id === task.id">
+											<div class="ui input fluid action">
+												<input type="text" name="name" required="true" v-model="$parent.$parent.selectedTask.name"/>
+												<button class="ui button blue" type="submit">Save</button>
+												<button class="ui button" v-on:click="$parent.$parent.state = ''">Discard</button>
+											</div>
+										</form>
 									</div>
-									<div class="right floated two wide column">
+									<div class="left floated two wide column">
 										<div class="ui checkbox right floated">
 											<input type="checkbox" v-on:click="$parent.$parent.toggleDone($event, task.id)" v-bind:checked="task.completed">
 											<label>Completed</label>
@@ -98,8 +107,10 @@ var storyData = [
 		'Story': storyComponent
 	},
 	data: {
+		state: '',
 		tasks: taskData,
-		stories: storyData
+		stories: storyData,
+		selectedTask: {}
 	},
 	methods: {
 		getStoryTasks: function(storyId) {
@@ -153,14 +164,31 @@ var storyData = [
 				id: nextId,
 				storyId: storyId,
 				name: "New Task",
-				completed: false
+				completed: false,
+				isEditing: true
 			});
 
 			this.updateProgressBars(storyId);
 			this.updatePopups(); //TODO: fix timings
 		},
 		editTask: function(event, id) {
-			console.log('edit clicked: ' + id);
+			let task = this.tasks.find(item => item.id === id);
+			if (task) {
+				this.state = 'edit';
+
+				this.selectedTask = {
+					id: task.id,
+					name: task.name
+				};
+			}
+		},
+		updateTask: function($event, id) {
+			let task = this.tasks.find(item => item.id === id);
+			if (task) {
+				this.state = '';
+
+				task.name = this.selectedTask.name;
+			}
 		},
 		deleteTask: function(event, id) {
 			let taskIndex = this.tasks.findIndex(item => item.id === id);
