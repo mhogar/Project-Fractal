@@ -23,6 +23,6 @@
 	background-color: lightblue;
 }
 
-.edit-select:hover {
-	cursor: pointer;
+.delete-confirm-popup {
+	min-width: 300px;
 }

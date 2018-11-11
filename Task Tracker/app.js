@@ -18,9 +18,19 @@ var taskComponent = {
 										  <button class="ui icon circular blue button" v-on:click="$parent.$parent.editTask($event, task.id)">
 										    <i class="pencil icon"></i>
 										  </button>
-										  <button class="ui icon circular red button" v-on:click="$parent.$parent.deleteTask($event, task.id)">
+										  <button class="delete-button ui icon circular red button">
 										    <i class="trash icon"></i>
 										  </button>
+										  <div class="delete-confirm-popup ui fluid popup bottom right transition hidden">
+										  	<div class="ui grid">
+										  		<div class="left floated eleven wide column">
+										  			Are you sure you want to delete this task?
+									  			</div>
+									  			<div class="right floated five wide column">
+										  			<button class="ui button red" v-on:click="$parent.$parent.deleteTask($event, task.id)">Delete</button>
+									  			</div>
+								  			</div>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -103,7 +113,7 @@ var storyData = [
 				let story = stories.find(item => item.id === storyId);
 				if (story) {
 					tasks = getStoryTasks(story.id);
-					story.percent = Math.round(tasks.filter(task => task.completed === true).length / tasks.length * 100 *100) / 100;
+					story.percent = Math.round(tasks.filter(task => task.completed === true).length / tasks.length * 100);
 
 					let progressBar = $('#story-progress-bar-' + story.id);
 					progressBar.css('width', story.percent + '%');
@@ -113,13 +123,11 @@ var storyData = [
 			if (storyId !== false) {
 				updateProgressBar(storyId);
 			}
-			else
-			{
+			else {
 				this.stories.forEach(function(story) {
 					updateProgressBar(story.id);
 				});
 			}
-			
 		},
 		toggleDone: function (event, id) {
 			event.preventDefault();
@@ -130,6 +138,13 @@ var storyData = [
 
 				this.updateProgressBars(task.storyId);
 			}
+		},
+		updatePopups: function() {
+			$('.delete-button').popup({
+				popup: $('.delete-confirm-popup'),
+				position: "bottom right",
+				on: 'click'
+			});
 		},
 		addNewTask: function(event, storyId) {
 			let nextId = (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1;
@@ -142,17 +157,23 @@ var storyData = [
 			});
 
 			this.updateProgressBars(storyId);
+			this.updatePopups(); //TODO: fix timings
 		},
 		editTask: function(event, id) {
 			console.log('edit clicked: ' + id);
 		},
 		deleteTask: function(event, id) {
-			console.log('delete clicked: ' + id);
+			let taskIndex = this.tasks.findIndex(item => item.id === id);
+			if (taskIndex !== -1) {
+				let task = this.tasks[taskIndex];
+				this.$delete(this.tasks, taskIndex);
+				this.updateProgressBars(task.storyId);
+			}
 		}
 	},
 	mounted: function() {
 		this.updateProgressBars();
-
+		this.updatePopups();
 		$('.ui.accordion').accordion();
 	}
 });
