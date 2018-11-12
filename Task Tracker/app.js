@@ -1,30 +1,71 @@
+var taskData = [
+	{ id: 1, storyId: 1, name: "Task 1", completed: false },
+	{ id: 2, storyId: 1, name: "Another Task", completed: true },
+	{ id: 3, storyId: 2, name: "One More Task", completed: false }
+];
+
+var storyData = [
+	{ id: 1, name: "Story", percent: 0},
+	{ id: 2, name: "Story 2", percent: 0}
+];
+
+//=============================================================================
+
 var taskComponent = {
 	props: ['task'],
+	data: function() {
+		return {
+			state: '',
+			editTask: {}
+		};
+	},
+	methods: {
+		toggleDone: function (event) {
+			this.task.completed = !this.task.completed;
+			this.$parent.updateProgressBar();
+		},
+		edit: function(event) {
+			this.state = 'edit';
+
+			this.editTask = {
+				id: this.task.id,
+				name: this.task.name
+			};
+		},
+		update: function($event) {
+			this.state = '';
+
+			this.task.name = this.editTask.name;
+		},
+		destroy: function(event) {
+			this.$parent.deleteFromTasks(this.task.id);
+		}
+	},
 	template: `
 						<div class="ui segments">
 							<div v-bind:class="'ui segment ' + (task.completed ? 'green task-complete' : 'yellow task-todo')">
 								<div class="ui grid">
 									<div class="left floated twelve wide column">
-										<div v-if="$parent.$parent.state !== 'edit'">
+										<div v-if="state === ''">
 											<i class="thumbtack icon"></i> {{task.name}}
 										</div>
-										<form class="ui form" v-on:submit.prevent="$parent.$parent.state === 'edit' && $parent.$parent.updateTask($event, $parent.$parent.selectedTask.id)" v-if="$parent.$parent.state === 'edit' && $parent.$parent.selectedTask.id === task.id">
+										<form class="ui form" v-on:submit.prevent="state === 'edit' && update($event)" v-if="state !== ''">
 											<div class="ui input fluid action">
-												<input type="text" name="name" required="true" v-model="$parent.$parent.selectedTask.name"/>
+												<input type="text" name="name" required="true" v-model="editTask.name"/>
 												<button class="ui button blue" type="submit">Save</button>
-												<button class="ui button" v-on:click="$parent.$parent.state = ''">Discard</button>
+												<button class="ui button" v-on:click="state = ''">Discard</button>
 											</div>
 										</form>
 									</div>
 									<div class="left floated two wide column">
 										<div class="ui checkbox right floated">
-											<input type="checkbox" v-on:click="$parent.$parent.toggleDone($event, task.id)" v-bind:checked="task.completed">
+											<input type="checkbox" v-on:click.prevent="toggleDone($event)" v-bind:checked="task.completed">
 											<label>Completed</label>
 										</div>
 									</div>
 									<div class="left floated one wide column">
 										<div class="ui icon small buttons">
-										  <button class="ui icon circular blue button" v-on:click="$parent.$parent.editTask($event, task.id)">
+										  <button class="ui icon circular blue button" v-on:click="edit($event)">
 										    <i class="pencil icon"></i>
 										  </button>
 										  <button class="delete-button ui icon circular red button">
@@ -36,7 +77,7 @@ var taskComponent = {
 										  			Are you sure you want to delete this task?
 									  			</div>
 									  			<div class="right floated five wide column">
-										  			<button class="ui button red" v-on:click="$parent.$parent.deleteTask($event, task.id)">Delete</button>
+										  			<button class="ui button red" v-on:click="destroy($event)">Delete</button>
 									  			</div>
 								  			</div>
 											</div>
@@ -48,11 +89,59 @@ var taskComponent = {
 						`
 };
 
+//=============================================================================
+
 var storyComponent = {
+	props: ['story'],
 	components: {
 		'Task': taskComponent
 	},
-	props: ['story'],
+	data: function() {
+		return {
+			tasks: [],
+		};
+	},
+	methods: {
+		getTasks: function() {
+			return taskData.filter(task => task.storyId === this.story.id);
+		},
+		createTask: function(event) {
+			let nextId = (taskData.sort((a, b) => a.id - b.id))[taskData.length - 1].id + 1;
+
+			this.addToTasks({
+				id: nextId,
+				storyId: this.story.id,
+				name: "New Task",
+				completed: false
+			});
+		},
+		addToTasks: function(task) {
+			this.tasks.push(task);
+
+			//this.updatePopups(); //TODO: fix timings
+		},
+		deleteFromTasks: function(taskId) {
+			let taskIndex = this.tasks.findIndex(item => item.id === taskId);
+			if (taskIndex !== -1) {
+				let task = this.tasks[taskIndex];
+				this.$delete(this.tasks, taskIndex);
+
+				this.updateProgressBar();
+			}
+		},
+		updateProgressBar: function() {
+			this.story.percent = Math.round(this.tasks.filter(task => task.completed === true).length / this.tasks.length * 100);
+
+			let progressBar = $('#story-progress-bar-' + this.story.id);
+			progressBar.css('width', this.story.percent + '%');
+		}
+	},
+	beforeMount: function() { 
+		this.tasks = this.getTasks();
+	},
+	mounted: function() {
+		this.updateProgressBar();
+	},
 	template: `
 						<div class="story-segment ui segments">
 							<div class="story-segment-header ui purple segment">
@@ -73,9 +162,9 @@ var storyComponent = {
 										</div>
 									</div>
 									<div class="content active">
-										<Task v-for="task in $parent.getStoryTasks(story.id)" :key="task.id" v-bind:task="task"></Task>
+										<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
 										<div class="ui segments">
-											<div class="ui segment new-task" v-on:click="$parent.addNewTask($event, story.id)">
+											<div class="ui segment new-task" v-on:click="createTask($event, story.id)">
 												<i class="plus circle icon"></i> Add a new task
 											</div>
 										</div>
@@ -88,119 +177,24 @@ var storyComponent = {
 
 //=============================================================================
 
-var taskData = [
-	{ id: 1, storyId: 1, name: "Task 1", completed: false },
-	{ id: 2, storyId: 1, name: "Another Task", completed: true },
-	{ id: 3, storyId: 2, name: "One More Task", completed: false }
-];
-
-var storyData = [
-	{ id: 1, name: "Story", percent: 0},
-	{ id: 2, name: "Story 2", percent: 0}
-];
-
-//=============================================================================
-
 	var app = new Vue({
 	el: '#app',
 	components: {
 		'Story': storyComponent
 	},
 	data: {
-		state: '',
-		tasks: taskData,
 		stories: storyData,
-		selectedTask: {}
 	},
 	methods: {
-		getStoryTasks: function(storyId) {
-			return this.tasks.filter(task => task.storyId === storyId);
-		},
-		updateProgressBars: function(storyId = false) {
-			let stories = this.stories;
-			let getStoryTasks = this.getStoryTasks;
-
-			let updateProgressBar = function(storyId) {
-				let story = stories.find(item => item.id === storyId);
-				if (story) {
-					tasks = getStoryTasks(story.id);
-					story.percent = Math.round(tasks.filter(task => task.completed === true).length / tasks.length * 100);
-
-					let progressBar = $('#story-progress-bar-' + story.id);
-					progressBar.css('width', story.percent + '%');
-				}
-			};
-
-			if (storyId !== false) {
-				updateProgressBar(storyId);
-			}
-			else {
-				this.stories.forEach(function(story) {
-					updateProgressBar(story.id);
-				});
-			}
-		},
-		toggleDone: function (event, id) {
-			event.preventDefault();
-
-			let task = this.tasks.find(item => item.id === id);
-			if (task) {
-				task.completed = !task.completed;
-
-				this.updateProgressBars(task.storyId);
-			}
-		},
 		updatePopups: function() {
 			$('.delete-button').popup({
 				popup: $('.delete-confirm-popup'),
 				position: "bottom right",
 				on: 'click'
 			});
-		},
-		addNewTask: function(event, storyId) {
-			let nextId = (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1;
-
-			taskData.push({
-				id: nextId,
-				storyId: storyId,
-				name: "New Task",
-				completed: false,
-				isEditing: true
-			});
-
-			this.updateProgressBars(storyId);
-			this.updatePopups(); //TODO: fix timings
-		},
-		editTask: function(event, id) {
-			let task = this.tasks.find(item => item.id === id);
-			if (task) {
-				this.state = 'edit';
-
-				this.selectedTask = {
-					id: task.id,
-					name: task.name
-				};
-			}
-		},
-		updateTask: function($event, id) {
-			let task = this.tasks.find(item => item.id === id);
-			if (task) {
-				this.state = '';
-
-				task.name = this.selectedTask.name;
-			}
-		},
-		deleteTask: function(event, id) {
-			let taskIndex = this.tasks.findIndex(item => item.id === id);
-			if (taskIndex !== -1) {
-				let task = this.tasks[taskIndex];
-				this.$delete(this.tasks, taskIndex);
-				this.updateProgressBars(task.storyId);
-			}
 		}
 	},
 	mounted: function() {
-		this.updateProgressBars();
 		this.updatePopups();
 		$('.ui.accordion').accordion();
 	}
