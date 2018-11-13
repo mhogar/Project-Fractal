@@ -10,6 +10,23 @@
 </head>
 <body>
 	<div id="app" class="ui container">
+		<div class="ui grid">
+			<div class="ten wide column">
+				<h2 class="ui header">
+				  	<i class="folder open icon"></i>
+				  	<div class="content">
+				    	Project Name
+				    	<div class="sub header">Project Description</div>
+				  	</div>
+				</h2>
+			</div>
+			<div class="right floated three wide column">
+				<button class="ui labeled icon purple button" v-on:click="createStory($event)">
+				  <i class="plus icon"></i>
+				  Add a new story
+				</button>
+			</div>
+		</div>
 		<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
 	</div>
 	<script src="app.js"></script>

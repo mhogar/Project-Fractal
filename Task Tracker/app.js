@@ -39,16 +39,24 @@ var taskComponent = {
 		},
 		destroy: function(event) {
 			this.$parent.deleteFromTasks(this.task.id);
+		},
+		focusNameInput: function() {
+			let editInput = document.getElementById('task-name-input-' + this.task.id);
+			if (editInput) {
+				editInput.focus();
+			}
 		}
 	},
 	mounted: function() {
 		if (this.state === 'create') {
-			document.getElementById('task-name-input-' + this.task.id).focus();
+			this.focusNameInput();
 		}
+
+		$('.ui.dropdown.edit-menu').dropdown({ action: 'hide' });
 	},
 	updated: function() {
 		if (this.state === 'edit') {
-			document.getElementById('task-name-input-' + this.task.id).focus();
+			this.focusNameInput();
 		}
 	},
 	template: 
@@ -75,24 +83,17 @@ var taskComponent = {
 							</div>
 						</div>
 						<div class="left floated one wide column">
-							<div class="ui icon small buttons">
-							  <button class="ui icon circular blue button" v-on:click="edit($event)">
-							    <i class="pencil icon"></i>
-							  </button>
-							  <button class="delete-button ui icon circular red button">
-							    <i class="trash icon"></i>
-							  </button>
-							  <div class="delete-confirm-popup ui fluid popup bottom right transition hidden">
-							  	<div class="ui grid">
-							  		<div class="left floated eleven wide column">
-							  			Are you sure you want to delete this task?
+							<div class="ui left pointing dropdown icon button blue edit-menu">
+							  	<i class="icon ellipsis horizontal"></i>
+							  	<div class="menu">
+							  		<div class="item" v-on:click="state === 'create' ? focusNameInput() : edit($event)">
+							  			<i class="edit icon"></i> Edit
 						  			</div>
-						  			<div class="right floated five wide column">
-							  			<button class="ui button red" v-on:click="destroy($event)">Delete</button>
-						  			</div>
-					  			</div>
-								</div>
-							</div>
+						  			<div class="item" v-on:click="destroy($event)">
+						  				<i class="delete icon"></i> Delete
+					  				</div>
+				  				</div>
+						  	</div>
 						</div>
 					</div>
 				</div>
@@ -117,7 +118,7 @@ var storyComponent = {
 			return taskData.filter(task => task.storyId === this.story.id);
 		},
 		createTask: function(event) {
-			let nextId = (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1;
+			let nextId = this.tasks.length ? (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1 : 0;
 			let task = {
 				id: nextId,
 				storyId: this.story.id,
@@ -126,11 +127,10 @@ var storyComponent = {
 			};
 
 			this.addToTasks(task);
+			this.updateProgressBar();
 		},
 		addToTasks: function(task) {
 			this.tasks.push(task);
-
-			//this.updatePopups(); //TODO: fix timings
 		},
 		deleteFromTasks: function(taskId) {
 			let taskIndex = this.tasks.findIndex(item => item.id === taskId);
@@ -156,7 +156,7 @@ var storyComponent = {
 	},
 	template: 
 			`
-			<div class="story-segment ui segments">
+			<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
 				<div class="story-segment-header ui purple segment">
 					<div class="ui accordion">
 						<div class="title active">
@@ -166,10 +166,12 @@ var storyComponent = {
 									<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
 								</div>
 								<div class="right floated four wide column">
-									<div class="ui purple progress">
-									  <div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id">
-									  </div>
-								   	<div class="label">{{story.percent}}% Completed</div>
+									<div class="ui purple progress" v-if="tasks.length > 0">
+									  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
+							   			<div class="label">{{story.percent}}% Completed</div>
+									</div>
+									<div v-if="tasks.length === 0">
+										<span class="ui small header">No Tasks</span>
 									</div>
 								</div>
 							</div>
@@ -196,19 +198,38 @@ var storyComponent = {
 		'Story': storyComponent
 	},
 	data: {
-		stories: storyData,
+		state: '',
+		stories: []
 	},
 	methods: {
-		updatePopups: function() {
-			$('.delete-button').popup({
-				popup: $('.delete-confirm-popup'),
-				position: "bottom right",
-				on: 'click'
-			});
+		getStories: function() {
+			return storyData;
+		},
+		createStory: function(event) {
+			this.state = 'create';
+
+			let nextId = this.stories.length ? (this.stories.sort((a, b) => a.id - b.id))[this.stories.length - 1].id + 1 : 0;
+			let story = {
+				id: nextId,
+				name: 'New Story',
+				percent: 0
+			};
+
+			this.stories.push(story);
 		}
 	},
+	beforeMount: function() {
+		this.stories = this.getStories();
+	},
 	mounted: function() {
-		this.updatePopups();
 		$('.ui.accordion').accordion();
+	},
+	updated: function() {
+		if (this.state === 'create'){
+			this.state = '';
+			
+			$('.ui.accordion').accordion();
+			window.scrollTo(0,document.body.scrollHeight);
+		}
 	}
 });

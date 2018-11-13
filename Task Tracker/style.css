@@ -1,3 +1,8 @@
+.ui.container {
+	margin-top: 2em;
+	margin-bottom: 2em;
+}
+
 .story-segment {
 	margin-top: 3em !important;
 }
@@ -20,9 +25,9 @@
 
 .new-task:hover {
 	cursor: pointer;
-	background-color: lightblue;
+	background-color: lightblue !important;
 }
 
-.delete-confirm-popup {
-	min-width: 300px;
+.new-story:hover {
+	cursor: pointer;
 }
