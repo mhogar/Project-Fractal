@@ -15,7 +15,7 @@ var taskComponent = {
 	props: ['task'],
 	data: function() {
 		return {
-			state: '',
+			state: this.task.name === '' ? 'create' : '',
 			editTask: {}
 		};
 	},
@@ -41,52 +41,63 @@ var taskComponent = {
 			this.$parent.deleteFromTasks(this.task.id);
 		}
 	},
-	template: `
-						<div class="ui segments">
-							<div v-bind:class="'ui segment ' + (task.completed ? 'green task-complete' : 'yellow task-todo')">
-								<div class="ui grid">
-									<div class="left floated twelve wide column">
-										<div v-if="state === ''">
-											<i class="thumbtack icon"></i> {{task.name}}
-										</div>
-										<form class="ui form" v-on:submit.prevent="state === 'edit' && update($event)" v-if="state !== ''">
-											<div class="ui input fluid action">
-												<input type="text" name="name" required="true" v-model="editTask.name"/>
-												<button class="ui button blue" type="submit">Save</button>
-												<button class="ui button" v-on:click="state = ''">Discard</button>
-											</div>
-										</form>
-									</div>
-									<div class="left floated two wide column">
-										<div class="ui checkbox right floated">
-											<input type="checkbox" v-on:click.prevent="toggleDone($event)" v-bind:checked="task.completed">
-											<label>Completed</label>
-										</div>
-									</div>
-									<div class="left floated one wide column">
-										<div class="ui icon small buttons">
-										  <button class="ui icon circular blue button" v-on:click="edit($event)">
-										    <i class="pencil icon"></i>
-										  </button>
-										  <button class="delete-button ui icon circular red button">
-										    <i class="trash icon"></i>
-										  </button>
-										  <div class="delete-confirm-popup ui fluid popup bottom right transition hidden">
-										  	<div class="ui grid">
-										  		<div class="left floated eleven wide column">
-										  			Are you sure you want to delete this task?
-									  			</div>
-									  			<div class="right floated five wide column">
-										  			<button class="ui button red" v-on:click="destroy($event)">Delete</button>
-									  			</div>
-								  			</div>
-											</div>
-										</div>
-									</div>
+	mounted: function() {
+		if (this.state === 'create') {
+			document.getElementById('task-name-input-' + this.task.id).focus();
+		}
+	},
+	updated: function() {
+		if (this.state === 'edit') {
+			document.getElementById('task-name-input-' + this.task.id).focus();
+		}
+	},
+	template: 
+			`
+			<div class="ui segments">
+				<div v-bind:class="'ui segment ' + (task.completed ? 'green task-complete' : 'yellow task-todo')">
+					<div class="ui grid">
+						<div class="left floated twelve wide column">
+							<div v-if="state === ''">
+								<i class="thumbtack icon"></i> {{task.name}}
+							</div>
+							<form class="ui form" v-on:submit.prevent="state !== '' && update($event)" v-if="state !== ''">
+								<div class="ui input fluid action">
+									<input type="text" name="name" required="true" v-model="editTask.name" v-bind:id="'task-name-input-' + task.id"/>
+									<button class="ui button blue" type="submit">Save</button>
+									<button class="ui button" v-on:click="state === 'create' ? destroy($event) : state = ''">Discard</button>
+								</div>
+							</form>
+						</div>
+						<div class="left floated two wide column">
+							<div class="ui checkbox right floated">
+								<input type="checkbox" v-on:click.prevent="toggleDone($event)" v-bind:checked="task.completed">
+								<label>Completed</label>
+							</div>
+						</div>
+						<div class="left floated one wide column">
+							<div class="ui icon small buttons">
+							  <button class="ui icon circular blue button" v-on:click="edit($event)">
+							    <i class="pencil icon"></i>
+							  </button>
+							  <button class="delete-button ui icon circular red button">
+							    <i class="trash icon"></i>
+							  </button>
+							  <div class="delete-confirm-popup ui fluid popup bottom right transition hidden">
+							  	<div class="ui grid">
+							  		<div class="left floated eleven wide column">
+							  			Are you sure you want to delete this task?
+						  			</div>
+						  			<div class="right floated five wide column">
+							  			<button class="ui button red" v-on:click="destroy($event)">Delete</button>
+						  			</div>
+					  			</div>
 								</div>
 							</div>
 						</div>
-						`
+					</div>
+				</div>
+			</div>
+			`
 };
 
 //=============================================================================
@@ -106,14 +117,15 @@ var storyComponent = {
 			return taskData.filter(task => task.storyId === this.story.id);
 		},
 		createTask: function(event) {
-			let nextId = (taskData.sort((a, b) => a.id - b.id))[taskData.length - 1].id + 1;
-
-			this.addToTasks({
+			let nextId = (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1;
+			let task = {
 				id: nextId,
 				storyId: this.story.id,
-				name: "New Task",
+				name: '',
 				completed: false
-			});
+			};
+
+			this.addToTasks(task);
 		},
 		addToTasks: function(task) {
 			this.tasks.push(task);
@@ -142,37 +154,38 @@ var storyComponent = {
 	mounted: function() {
 		this.updateProgressBar();
 	},
-	template: `
-						<div class="story-segment ui segments">
-							<div class="story-segment-header ui purple segment">
-								<div class="ui accordion">
-									<div class="title active">
-										<div class="ui grid">
-											<div class="left floated seven wide column">
-												<i class="dropdown icon"></i>								
-												<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
-											</div>
-											<div class="right floated four wide column">
-												<div class="ui purple progress">
-												  <div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id">
-												  </div>
-											   	<div class="label">{{story.percent}}% Completed</div>
-												</div>
-											</div>
-										</div>
-									</div>
-									<div class="content active">
-										<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
-										<div class="ui segments">
-											<div class="ui segment new-task" v-on:click="createTask($event, story.id)">
-												<i class="plus circle icon"></i> Add a new task
-											</div>
-										</div>
+	template: 
+			`
+			<div class="story-segment ui segments">
+				<div class="story-segment-header ui purple segment">
+					<div class="ui accordion">
+						<div class="title active">
+							<div class="ui grid">
+								<div class="left floated seven wide column">
+									<i class="dropdown icon"></i>								
+									<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
+								</div>
+								<div class="right floated four wide column">
+									<div class="ui purple progress">
+									  <div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id">
+									  </div>
+								   	<div class="label">{{story.percent}}% Completed</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						`
+						<div class="content active">
+							<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
+							<div class="ui segments">
+								<div class="ui segment new-task" v-on:click="createTask($event, story.id)">
+									<i class="plus circle icon"></i> Add a new task
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			`
 }
 
 //=============================================================================
