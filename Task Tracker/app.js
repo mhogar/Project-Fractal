@@ -185,6 +185,22 @@ var storyComponent = {
 							</div>
 						</div>
 					</div>
+					<div class="ui grid" style="margin-top: 0.5em;">
+						<div class="right floated three wide column">
+							<div class="ui left pointing dropdown labeled icon button blue edit-menu">
+							  	<i class="icon ellipsis horizontal"></i>
+							  	Options
+							  	<div class="menu">
+							  		<div class="item" v-on:click="">
+							  			<i class="edit icon"></i> Edit
+						  			</div>
+						  			<div class="item" v-on:click="">
+						  				<i class="delete icon"></i> Delete
+					  				</div>
+				  				</div>
+						  	</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			`
@@ -227,9 +243,9 @@ var storyComponent = {
 	updated: function() {
 		if (this.state === 'create'){
 			this.state = '';
-			
+
 			$('.ui.accordion').accordion();
-			window.scrollTo(0,document.body.scrollHeight);
+			window.scrollTo(0, document.body.scrollHeight);
 		}
 	}
 });
