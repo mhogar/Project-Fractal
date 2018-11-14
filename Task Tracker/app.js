@@ -11,8 +11,31 @@ var storyData = [
 
 //=============================================================================
 
+var editMenuComponent = {
+	props: ['editFunc', 'deleteFunc'],
+	template:
+			`
+			<div class="left floated one wide column">
+				<div class="ui left pointing dropdown icon button blue edit-menu">
+				  	<i class="icon ellipsis horizontal"></i>
+				  	<div class="menu">
+				  		<div class="item" v-on:click="editFunc($event)">
+				  			<i class="edit icon"></i> Edit
+			  			</div>
+			  			<div class="item" v-on:click="deleteFunc($event)">
+			  				<i class="delete icon"></i> Delete
+		  				</div>
+	  				</div>
+			  	</div>
+			</div>
+			`
+}
+
 var taskComponent = {
 	props: ['task'],
+	components: {
+		'EditMenu': editMenuComponent
+	},
 	data: function() {
 		return {
 			state: this.task.name === '' ? 'create' : '',
@@ -25,6 +48,11 @@ var taskComponent = {
 			this.$parent.updateProgressBar();
 		},
 		edit: function(event) {
+			if (this.state === 'create') {
+				this.focusNameInput();
+				return;
+			}
+
 			this.state = 'edit';
 
 			this.editTask = {
@@ -32,7 +60,7 @@ var taskComponent = {
 				name: this.task.name
 			};
 		},
-		update: function($event) {
+		update: function(event) {
 			this.state = '';
 
 			this.task.name = this.editTask.name;
@@ -83,17 +111,7 @@ var taskComponent = {
 							</div>
 						</div>
 						<div class="left floated one wide column">
-							<div class="ui left pointing dropdown icon button blue edit-menu">
-							  	<i class="icon ellipsis horizontal"></i>
-							  	<div class="menu">
-							  		<div class="item" v-on:click="state === 'create' ? focusNameInput() : edit($event)">
-							  			<i class="edit icon"></i> Edit
-						  			</div>
-						  			<div class="item" v-on:click="destroy($event)">
-						  				<i class="delete icon"></i> Delete
-					  				</div>
-				  				</div>
-						  	</div>
+							<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy"></EditMenu>
 						</div>
 					</div>
 				</div>
@@ -106,14 +124,21 @@ var taskComponent = {
 var storyComponent = {
 	props: ['story'],
 	components: {
-		'Task': taskComponent
+		'Task': taskComponent,
+		'EditMenu': editMenuComponent
 	},
 	data: function() {
 		return {
-			tasks: [],
+			tasks: []
 		};
 	},
 	methods: {
+		edit: function(event) {
+
+		},
+		destroy: function(event) {
+
+		},
 		getTasks: function() {
 			return taskData.filter(task => task.storyId === this.story.id);
 		},
@@ -158,23 +183,26 @@ var storyComponent = {
 			`
 			<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
 				<div class="story-segment-header ui purple segment">
+					<div class="ui grid">
+						<div class="left floated seven wide column">
+							<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
+						</div>
+						<div class="right floated four wide column">
+							<div class="ui purple progress" v-if="tasks.length > 0">
+							  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
+					   			<div class="label">{{story.percent}}% Completed</div>
+							</div>
+							<div v-if="tasks.length === 0">
+								<span class="ui small header">No Tasks</span>
+							</div>
+						</div>
+						<div class="one wide column">
+							<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy"></EditMenu>
+						</div>
+					</div>
 					<div class="ui accordion">
 						<div class="title active">
-							<div class="ui grid">
-								<div class="left floated seven wide column">
-									<i class="dropdown icon"></i>								
-									<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
-								</div>
-								<div class="right floated four wide column">
-									<div class="ui purple progress" v-if="tasks.length > 0">
-									  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
-							   			<div class="label">{{story.percent}}% Completed</div>
-									</div>
-									<div v-if="tasks.length === 0">
-										<span class="ui small header">No Tasks</span>
-									</div>
-								</div>
-							</div>
+							<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
 						</div>
 						<div class="content active">
 							<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
@@ -185,37 +213,20 @@ var storyComponent = {
 							</div>
 						</div>
 					</div>
-					<div class="ui grid" style="margin-top: 0.5em;">
-						<div class="right floated three wide column">
-							<div class="ui left pointing dropdown labeled icon button blue edit-menu">
-							  	<i class="icon ellipsis horizontal"></i>
-							  	Options
-							  	<div class="menu">
-							  		<div class="item" v-on:click="">
-							  			<i class="edit icon"></i> Edit
-						  			</div>
-						  			<div class="item" v-on:click="">
-						  				<i class="delete icon"></i> Delete
-					  				</div>
-				  				</div>
-						  	</div>
-						</div>
-					</div>
 				</div>
 			</div>
 			`
 }
 
-//=============================================================================
-
-	var app = new Vue({
-	el: '#app',
+var projectComponent = {
 	components: {
-		'Story': storyComponent
+		'Story': storyComponent,
 	},
-	data: {
-		state: '',
-		stories: []
+	data: function() {
+		return {
+			state: '',
+			stories: []
+		};
 	},
 	methods: {
 		getStories: function() {
@@ -232,20 +243,57 @@ var storyComponent = {
 			};
 
 			this.stories.push(story);
+		},
+		updateAccordion: function() {
+			$('.ui.accordion').accordion();
 		}
 	},
 	beforeMount: function() {
 		this.stories = this.getStories();
 	},
 	mounted: function() {
-		$('.ui.accordion').accordion();
+		this.updateAccordion();
 	},
 	updated: function() {
 		if (this.state === 'create'){
 			this.state = '';
 
-			$('.ui.accordion').accordion();
+			this.updateAccordion();
 			window.scrollTo(0, document.body.scrollHeight);
 		}
-	}
+	},
+	template:
+			`
+			<div>
+				<div class="ui grid">
+					<div class="ten wide column">
+						<h2 class="ui header">
+						  	<i class="folder open icon"></i>
+						  	<div class="content">
+						    	Project Name
+						    	<div class="sub header">Project Description</div>
+						  	</div>
+						</h2>
+					</div>
+					<div class="right floated three wide column">
+						<button class="ui labeled icon purple button" v-on:click="createStory($event)">
+						  <i class="plus icon"></i>
+						  Add a new story
+						</button>
+					</div>
+				</div>
+				<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
+			</div>
+			`
+}
+
+//=============================================================================
+
+var app = new Vue({
+	el: '#app',
+	components: {
+		'Project': projectComponent
+	},
+	template: `<Project></Project>`
+	
 });
