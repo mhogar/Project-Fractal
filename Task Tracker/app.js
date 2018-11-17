@@ -31,15 +31,38 @@ var editMenuComponent = {
 			`
 }
 
+var editFormComponent = {
+	props: ['saveFunc', 'discardFunc', 'model', 'id_name'],
+	computed: {
+		inputId: function() {
+			return this.id_name + this.model.id;
+		}
+	},
+	mounted: function() {
+		document.getElementById(this.inputId).focus();
+	},
+	template:
+			`
+			<form class="ui form" v-on:submit.prevent="saveFunc($event)">
+				<div class="ui input fluid action">
+					<input type="text" name="name" required="true" v-model="model.name" v-bind:id="inputId" />
+					<button class="ui button blue" type="submit">Save</button>
+					<button class="ui button" v-on:click="discardFunc($event)">Discard</button>
+				</div>
+			</form>
+			`
+}
+
 var taskComponent = {
 	props: ['task'],
 	components: {
-		'EditMenu': editMenuComponent
+		'EditMenu': editMenuComponent,
+		'EditForm': editFormComponent
 	},
 	data: function() {
 		return {
 			state: this.task.name === '' ? 'create' : '',
-			editTask: {}
+			editTask: this.task
 		};
 	},
 	methods: {
@@ -49,7 +72,6 @@ var taskComponent = {
 		},
 		edit: function(event) {
 			if (this.state === 'create') {
-				this.focusNameInput();
 				return;
 			}
 
@@ -67,25 +89,10 @@ var taskComponent = {
 		},
 		destroy: function(event) {
 			this.$parent.deleteFromTasks(this.task.id);
-		},
-		focusNameInput: function() {
-			let editInput = document.getElementById('task-name-input-' + this.task.id);
-			if (editInput) {
-				editInput.focus();
-			}
 		}
 	},
 	mounted: function() {
-		if (this.state === 'create') {
-			this.focusNameInput();
-		}
-
 		$('.ui.dropdown.edit-menu').dropdown({ action: 'hide' });
-	},
-	updated: function() {
-		if (this.state === 'edit') {
-			this.focusNameInput();
-		}
 	},
 	template: 
 			`
@@ -96,13 +103,12 @@ var taskComponent = {
 							<div v-if="state === ''">
 								<i class="thumbtack icon"></i> {{task.name}}
 							</div>
-							<form class="ui form" v-on:submit.prevent="state !== '' && update($event)" v-if="state !== ''">
-								<div class="ui input fluid action">
-									<input type="text" name="name" required="true" v-model="editTask.name" v-bind:id="'task-name-input-' + task.id"/>
-									<button class="ui button blue" type="submit">Save</button>
-									<button class="ui button" v-on:click="state === 'create' ? destroy($event) : state = ''">Discard</button>
-								</div>
-							</form>
+							<EditForm v-if="state !== ''"
+								v-bind:saveFunc="function(event) { state !== '' && update(event) }"
+								v-bind:discardFunc="function(event) {state === 'create' ? destroy(event) : state = ''}"
+								v-bind:model="editTask"
+								v-bind:id_name="'task-name-input-'">
+							</EditForm>
 						</div>
 						<div class="left floated two wide column">
 							<div class="ui checkbox right floated">
@@ -125,19 +131,32 @@ var storyComponent = {
 	props: ['story'],
 	components: {
 		'Task': taskComponent,
-		'EditMenu': editMenuComponent
+		'EditMenu': editMenuComponent,
+		'EditForm': editFormComponent
 	},
 	data: function() {
 		return {
-			tasks: []
+			tasks: [],
+			state: this.story.name === '' ? 'create' : '',
+			editStory: this.story
 		};
 	},
 	methods: {
 		edit: function(event) {
+			this.state = 'edit';
 
+			this.editStory = {
+				id: this.story.id,
+				name: this.story.name
+			};
+		},
+		update: function(event) {
+			this.state = '';
+
+			this.story.name = this.editStory.name;
 		},
 		destroy: function(event) {
-
+			this.$parent.deleteFromStories(this.story.id);
 		},
 		getTasks: function() {
 			return taskData.filter(task => task.storyId === this.story.id);
@@ -184,8 +203,16 @@ var storyComponent = {
 			<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
 				<div class="story-segment-header ui purple segment">
 					<div class="ui grid">
-						<div class="left floated seven wide column">
-							<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
+						<div class="left floated eleven wide column">
+							<div v-if="state === ''">
+								<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
+							</div>
+							<EditForm v-if="state !== ''"
+								v-bind:saveFunc="function(event) { state !== '' && update(event) }"
+								v-bind:discardFunc="function(event) {state === 'create' ? destroy(event) : state = ''}"
+								v-bind:model="editStory"
+								v-bind:id_name="'story-name-input-'">
+							</EditForm>
 						</div>
 						<div class="right floated four wide column">
 							<div class="ui purple progress" v-if="tasks.length > 0">
@@ -207,7 +234,7 @@ var storyComponent = {
 						<div class="content active">
 							<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
 							<div class="ui segments">
-								<div class="ui segment new-task" v-on:click="createTask($event, story.id)">
+								<div class="ui segment new-task" v-on:click="createTask($event)">
 									<i class="plus circle icon"></i> Add a new task
 								</div>
 							</div>
@@ -238,11 +265,17 @@ var projectComponent = {
 			let nextId = this.stories.length ? (this.stories.sort((a, b) => a.id - b.id))[this.stories.length - 1].id + 1 : 0;
 			let story = {
 				id: nextId,
-				name: 'New Story',
+				name: '',
 				percent: 0
 			};
 
 			this.stories.push(story);
+		},
+		deleteFromStories: function(storyId) {
+			let index = this.stories.findIndex(item => item.id === storyId);
+			if (index !== -1) {
+				this.$delete(this.stories, index);
+			}
 		},
 		updateAccordion: function() {
 			$('.ui.accordion').accordion();
