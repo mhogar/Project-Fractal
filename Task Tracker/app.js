@@ -12,21 +12,54 @@ var storyData = [
 //=============================================================================
 
 var editMenuComponent = {
-	props: ['editFunc', 'deleteFunc'],
+	props: ['editFunc', 'deleteFunc', 'confirmDelete', 'confirmDeleteMessage'],
+	computed: {
+		confirmDeleteModalId: function() {
+			return 'confirm-delete-modal-' + this._uid; //TODO: use other method of unique id
+		}
+	},
+	methods: {
+		deleteClicked: function(event) {
+			if (this.confirmDelete) {
+				$('#' + this.confirmDeleteModalId).modal('show');
+			}
+			else {
+				this.deleteFunc(event);
+			}
+		}
+	},
+	mounted: function() {
+		$('.ui.dropdown.delete-confirm-menu').dropdown({ action: 'hide' });
+	},
 	template:
 			`
-			<div class="left floated one wide column">
-				<div class="ui left pointing dropdown icon button blue edit-menu">
-				  	<i class="icon ellipsis horizontal"></i>
-				  	<div class="menu">
-				  		<div class="item" v-on:click="editFunc($event)">
-				  			<i class="edit icon"></i> Edit
-			  			</div>
-			  			<div class="item" v-on:click="deleteFunc($event)">
-			  				<i class="delete icon"></i> Delete
+			<div>
+				<div class="left floated one wide column">
+					<div class="ui left pointing dropdown icon button blue edit-menu">
+					  	<i class="icon ellipsis horizontal"></i>
+					  	<div class="menu">
+					  		<div class="item" v-on:click="editFunc($event)">
+					  			<i class="edit icon"></i> Edit
+				  			</div>
+				  			<div class="item" v-on:click="deleteClicked($event)">
+				  				<i class="delete icon"></i> Delete
+			  				</div>
 		  				</div>
-	  				</div>
-			  	</div>
+				  	</div>
+				</div>
+				<div class="ui tiny basic modal" v-bind:id="confirmDeleteModalId">
+					<div class="content">
+						<h3>{{confirmDeleteMessage}}</h3>
+				  	</div>
+				  	<div class="actions">
+    					<div class="ui red ok inverted button" v-on:click="deleteFunc($event)">
+    						<i class="remove icon"></i> Delete
+    					</div>
+    					<div class="ui white basic cancel inverted button">
+					      Cancel
+					    </div>
+				    </div>
+				</div>
 			</div>
 			`
 }
@@ -141,6 +174,19 @@ var storyComponent = {
 			editStory: this.story
 		};
 	},
+	computed: {
+		numTasks: function () {
+			return this.tasks ? this.tasks.length : 0;
+		},
+		deleteConfirmMessage: function () {
+			let message = 'Are you sure you want to delete this story and its ';
+
+			if (this.numTasks === 1) {
+				return message + 'task?';
+			}
+			return message + this.numTasks + ' tasks?';
+		}
+	},
 	methods: {
 		edit: function(event) {
 			this.state = 'edit';
@@ -162,7 +208,7 @@ var storyComponent = {
 			return taskData.filter(task => task.storyId === this.story.id);
 		},
 		createTask: function(event) {
-			let nextId = this.tasks.length ? (this.tasks.sort((a, b) => a.id - b.id))[this.tasks.length - 1].id + 1 : 0;
+			let nextId = this.numTasks ? (this.tasks.sort((a, b) => a.id - b.id))[this.numTasks - 1].id + 1 : 0;
 			let task = {
 				id: nextId,
 				storyId: this.story.id,
@@ -186,7 +232,7 @@ var storyComponent = {
 			}
 		},
 		updateProgressBar: function() {
-			this.story.percent = Math.round(this.tasks.filter(task => task.completed === true).length / this.tasks.length * 100);
+			this.story.percent = Math.round(this.tasks.filter(task => task.completed === true).length / this.numTasks * 100);
 
 			let progressBar = $('#story-progress-bar-' + this.story.id);
 			progressBar.css('width', this.story.percent + '%');
@@ -215,16 +261,16 @@ var storyComponent = {
 							</EditForm>
 						</div>
 						<div class="right floated four wide column">
-							<div class="ui purple progress" v-if="tasks.length > 0">
+							<div class="ui purple progress" v-if="numTasks > 0">
 							  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
 					   			<div class="label">{{story.percent}}% Completed</div>
 							</div>
-							<div v-if="tasks.length === 0">
+							<div v-if="numTasks === 0">
 								<span class="ui small header">No Tasks</span>
 							</div>
 						</div>
 						<div class="one wide column">
-							<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy"></EditMenu>
+							<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="numTasks > 0" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
 						</div>
 					</div>
 					<div class="ui accordion">
@@ -315,6 +361,9 @@ var projectComponent = {
 						</button>
 					</div>
 				</div>
+				<h2 class="ui center aligned header" v-if="!stories.length">
+				  <span class="sub header">You don't have any stories yet. Create some.</span>
+				</h2>
 				<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
 			</div>
 			`
