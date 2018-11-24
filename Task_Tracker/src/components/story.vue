@@ -45,6 +45,27 @@
 
 </template>
 
+<style scoped>
+
+.story-segment {
+	margin-top: 3em !important;
+}
+
+.story-segment-header {
+	background-color: lavender !important;
+}
+
+.completion-bar {
+	transition-duration: 300ms !important;
+}
+
+.new-task:hover {
+	cursor: pointer;
+	background-color: lightblue !important;
+}
+
+</style>
+
 <script>
 
 import editMenuComponent from './editMenu.vue';

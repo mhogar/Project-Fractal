@@ -1,10 +1,10 @@
 import Vue from '../node_modules/vue/dist/vue.js'
-import projectComponent from './components/project.vue'
+import appComponent from './app.vue'
 
 var app = new Vue({
 	el: '#app',
 	components: {
-		'Project': projectComponent
+		'App': appComponent
 	},
-	template: `<Project></Project>`
+	template: `<App></App>`
 });

@@ -29,6 +29,18 @@
 
 </template>
 
+<style>
+
+.task-todo {
+	background-color: lightgoldenrodyellow !important;
+}
+
+.task-complete {
+	background-color: palegreen !important;
+}
+
+</style>
+
 <script>
 
 import editMenuComponent from './editMenu.vue';
