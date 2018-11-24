@@ -1,3 +1,5 @@
+<script>
+
 let uid = 0;
 
 export default {
@@ -6,3 +8,5 @@ export default {
 		uid += 1;
 	}
 };
+
+</script>

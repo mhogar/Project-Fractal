@@ -1,6 +1,55 @@
-import editMenuComponent from './editMenu';
-import editFormComponent from './editForm';
-import taskComponent from './task';
+<template>
+	
+<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
+	<div class="story-segment-header ui purple segment">
+		<div class="ui grid">
+			<div class="left floated eleven wide column">
+				<div v-if="state === ''">
+					<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
+				</div>
+				<EditForm v-if="state !== ''"
+					v-bind:saveFunc="function(event) { state !== '' && update(event) }"
+					v-bind:discardFunc="function(event) {state === 'create' ? destroy(event) : state = ''}"
+					v-bind:model="editStory"
+					v-bind:id_name="'story-name-input-'">
+				</EditForm>
+			</div>
+			<div class="right floated four wide column">
+				<div class="ui purple progress" v-if="numTasks > 0">
+				  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
+		   			<div class="label">{{story.percent}}% Completed</div>
+				</div>
+				<div v-if="numTasks === 0">
+					<span class="ui small header">No Tasks</span>
+				</div>
+			</div>
+			<div class="one wide column">
+				<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="numTasks > 0" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
+			</div>
+		</div>
+		<div class="ui accordion">
+			<div class="title active">
+				<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
+			</div>
+			<div class="content active">
+				<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
+				<div class="ui segments">
+					<div class="ui segment new-task" v-on:click="createTask($event)">
+						<i class="plus circle icon"></i> Add a new task
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</template>
+
+<script>
+
+import editMenuComponent from './editMenu.vue';
+import editFormComponent from './editForm.vue';
+import taskComponent from './task.vue';
 
 var taskData = [
 	{ id: 1, storyId: 1, name: "Task 1", completed: false },
@@ -91,50 +140,7 @@ export default {
 	},
 	mounted: function() {
 		this.updateProgressBar();
-	},
-	template: 
-			`
-			<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
-				<div class="story-segment-header ui purple segment">
-					<div class="ui grid">
-						<div class="left floated eleven wide column">
-							<div v-if="state === ''">
-								<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
-							</div>
-							<EditForm v-if="state !== ''"
-								v-bind:saveFunc="function(event) { state !== '' && update(event) }"
-								v-bind:discardFunc="function(event) {state === 'create' ? destroy(event) : state = ''}"
-								v-bind:model="editStory"
-								v-bind:id_name="'story-name-input-'">
-							</EditForm>
-						</div>
-						<div class="right floated four wide column">
-							<div class="ui purple progress" v-if="numTasks > 0">
-							  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
-					   			<div class="label">{{story.percent}}% Completed</div>
-							</div>
-							<div v-if="numTasks === 0">
-								<span class="ui small header">No Tasks</span>
-							</div>
-						</div>
-						<div class="one wide column">
-							<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="numTasks > 0" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
-						</div>
-					</div>
-					<div class="ui accordion">
-						<div class="title active">
-							<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
-						</div>
-						<div class="content active">
-							<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
-							<div class="ui segments">
-								<div class="ui segment new-task" v-on:click="createTask($event)">
-									<i class="plus circle icon"></i> Add a new task
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			`
-}
+	}
+};
+
+</script>

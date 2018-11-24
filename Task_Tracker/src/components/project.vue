@@ -1,4 +1,34 @@
-import storyComponent from './story';
+<template>
+
+<div>
+	<div class="ui grid">
+		<div class="ten wide column">
+			<h2 class="ui header">
+			  	<i class="folder open icon"></i>
+			  	<div class="content">
+			    	Project Name
+			    	<div class="sub header">Project Description</div>
+			  	</div>
+			</h2>
+		</div>
+		<div class="right floated three wide column">
+			<button class="ui labeled icon purple button" v-on:click="createStory($event)">
+			  <i class="plus icon"></i>
+			  Add a new story
+			</button>
+		</div>
+	</div>
+	<h2 class="ui center aligned header" v-if="!stories.length">
+	  <span class="sub header">You don't have any stories yet. Create some.</span>
+	</h2>
+	<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
+</div>
+
+</template>
+
+<script>
+
+import storyComponent from './story.vue';
 
 var storyData = [
 	{ id: 1, name: "Story", percent: 0},
@@ -55,30 +85,6 @@ export default {
 			window.scrollTo(0, document.body.scrollHeight);
 		}
 	},
-	template:
-			`
-			<div>
-				<div class="ui grid">
-					<div class="ten wide column">
-						<h2 class="ui header">
-						  	<i class="folder open icon"></i>
-						  	<div class="content">
-						    	Project Name
-						    	<div class="sub header">Project Description</div>
-						  	</div>
-						</h2>
-					</div>
-					<div class="right floated three wide column">
-						<button class="ui labeled icon purple button" v-on:click="createStory($event)">
-						  <i class="plus icon"></i>
-						  Add a new story
-						</button>
-					</div>
-				</div>
-				<h2 class="ui center aligned header" v-if="!stories.length">
-				  <span class="sub header">You don't have any stories yet. Create some.</span>
-				</h2>
-				<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
-			</div>
-			`
 };
+
+</script>
