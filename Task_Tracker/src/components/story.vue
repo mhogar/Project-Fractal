@@ -1,5 +1,5 @@
 <template>
-	<div class="story-segment ui segments" v-bind:id="'story-segment-' + story.id">
+	<div class="story-segment ui segments">
 		<div class="story-segment-header ui purple segment">
 			<div class="ui grid">
 				<div class="left floated eleven wide column">
@@ -15,7 +15,7 @@
 				</div>
 				<div class="right floated four wide column">
 					<div class="ui purple progress" v-if="numTasks > 0">
-					  	<div class="bar completion-bar" v-bind:id="'story-progress-bar-' + story.id"></div>
+					  	<div class="bar completion-bar" v-bind:id="progressBarId"></div>
 			   			<div class="label">{{story.percent}}% Completed</div>
 					</div>
 					<div v-if="numTasks === 0">
@@ -91,6 +91,9 @@
 			numTasks: function () {
 				return this.tasks ? this.tasks.length : 0;
 			},
+			progressBarId: function() {
+				return 'story-progress-bar-' + this.story.id;
+			},
 			deleteConfirmLevel: function() {
 				let deleteConfirmLevel = editMenuComponent.data().DELETE_CONFIRM_LEVEL;
 				if (this.numTasks > 0) {
@@ -155,7 +158,7 @@
 			updateProgressBar: function() {
 				this.story.percent = Math.round(this.tasks.filter(task => task.completed === true).length / this.numTasks * 100);
 
-				let progressBar = $('#story-progress-bar-' + this.story.id);
+				let progressBar = $('#' + this.progressBarId);
 				progressBar.css('width', this.story.percent + '%');
 			}
 		},

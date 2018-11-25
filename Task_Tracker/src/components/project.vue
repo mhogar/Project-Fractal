@@ -38,8 +38,18 @@
 		  <span class="sub header">You don't have any stories yet. Create some.</span>
 		</h2>
 		<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
+		<button class="ui right floated labeled icon teal button" id="back-button" v-on:click="$parent.deselectProject();">
+			<i class="ui icon arrow left"></i>
+			Back to project select
+		</button>
 	</div>
 </template>
+
+<style scoped>
+	#back-button {
+		margin-top: 1em;
+	}
+</style>
 
 <script>
 	import storyComponent from './story.vue';
