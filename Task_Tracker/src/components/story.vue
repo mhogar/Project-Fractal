@@ -23,10 +23,10 @@
 					</div>
 				</div>
 				<div class="one wide column">
-					<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="numTasks > 0" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
+					<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="deleteConfirmLevel" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
 				</div>
 			</div>
-			<div class="ui accordion">
+			<div class="ui accordion task-list">
 				<div class="title active">
 					<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
 				</div>
@@ -90,6 +90,14 @@
 		computed: {
 			numTasks: function () {
 				return this.tasks ? this.tasks.length : 0;
+			},
+			deleteConfirmLevel: function() {
+				let deleteConfirmLevel = editMenuComponent.data().DELETE_CONFIRM_LEVEL;
+				if (this.numTasks > 0) {
+					return deleteConfirmLevel.NORMAL;
+				}
+
+				return deleteConfirmLevel.NONE;
 			},
 			deleteConfirmMessage: function () {
 				let message = 'Are you sure you want to delete this story and its ';
@@ -156,6 +164,7 @@
 		},
 		mounted: function() {
 			this.updateProgressBar();
+			$('.ui.accordion.task-list').accordion();
 		}
 	};
 </script>

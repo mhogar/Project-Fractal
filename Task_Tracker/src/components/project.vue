@@ -16,6 +16,9 @@
 				  Add a new story
 				</button>
 			</div>
+			<div class="one wide column">
+				<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="deleteConfirmLevel" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
+			</div>
 		</div>
 		<h2 class="ui center aligned header" v-if="!stories.length">
 		  <span class="sub header">You don't have any stories yet. Create some.</span>
@@ -26,6 +29,8 @@
 
 <script>
 	import storyComponent from './story.vue';
+	import editFormComponent from './editForm.vue';
+	import editMenuComponent from './editMenu.vue';
 
 	var storyData = [
 		{ id: 1, name: "Story", percent: 0},
@@ -35,6 +40,7 @@
 	export default {
 		components: {
 			'Story': storyComponent,
+			'EditMenu': editMenuComponent
 		},
 		data: function() {
 			return {
@@ -42,13 +48,19 @@
 				stories: []
 			};
 		},
+		computed: {
+			deleteConfirmLevel: function() {
+				return editMenuComponent.data().DELETE_CONFIRM_LEVEL.EXTRA;
+			},
+			deleteConfirmMessage: function() {
+				return 'Are you sure you want to this project? This action cannot be undone.'
+			}
+		},
 		methods: {
 			getStories: function() {
 				return storyData;
 			},
 			createStory: function(event) {
-				this.state = 'create';
-
 				let nextId = this.stories.length ? (this.stories.sort((a, b) => a.id - b.id))[this.stories.length - 1].id + 1 : 0;
 				let story = {
 					id: nextId,
@@ -57,6 +69,8 @@
 				};
 
 				this.stories.push(story);
+
+				window.scrollTo(0, document.body.scrollHeight);
 			},
 			deleteFromStories: function(storyId) {
 				let index = this.stories.findIndex(item => item.id === storyId);
@@ -64,23 +78,15 @@
 					this.$delete(this.stories, index);
 				}
 			},
-			updateAccordion: function() {
-				$('.ui.accordion').accordion();
+			edit: function(event) {
+				console.log('project edit');
+			},
+			destroy: function(event) {
+				console.log('project delete');
 			}
 		},
 		beforeMount: function() {
 			this.stories = this.getStories();
-		},
-		mounted: function() {
-			this.updateAccordion();
-		},
-		updated: function() {
-			if (this.state === 'create'){
-				this.state = '';
-
-				this.updateAccordion();
-				window.scrollTo(0, document.body.scrollHeight);
-			}
-		},
+		}
 	};
 </script>

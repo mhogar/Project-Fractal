@@ -78,9 +78,6 @@
 			destroy: function(event) {
 				this.$parent.deleteFromTasks(this.task.id);
 			}
-		},
-		mounted: function() {
-			$('.ui.dropdown.edit-menu').dropdown({ action: 'hide' });
 		}
 	};
 </script>
