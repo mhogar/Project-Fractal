@@ -11,8 +11,8 @@
 		</div>
 		<div class="content">
 			<div class="ui horizontal list">
-				<div class="item">Stories: {{project.numStories}}</div>
-				<div class="item">Tasks: {{project.numTasks}}</div>
+				<div class="item">Stories: <b>{{project.numStories}}</b></div>
+				<div class="item">Tasks: <b>{{project.numTasks}}</b></div>
 			</div>
 		</div>
 		<div class="extra content">
