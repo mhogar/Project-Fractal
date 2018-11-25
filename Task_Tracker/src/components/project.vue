@@ -1,14 +1,28 @@
 <template>
 	<div>
 		<div class="ui grid">
-			<div class="ten wide column">
-				<h2 class="ui header">
+			<div class="twelve wide column">
+				<h2 class="ui header" v-if="state === ''">
 				  	<i class="folder open icon"></i>
 				  	<div class="content">
-				    	Project Name
-				    	<div class="sub header">Project Description</div>
+				    	{{project.name}}
+				    	<div class="sub header">{{project.description}}</div>
 				  	</div>
 				</h2>
+				<form class="ui form" v-on:submit.prevent="update($event)" v-else>
+					<div class="fields">
+						<div class="four wide field">
+							<label>Name</label>
+							<input id="project-name-input" type="text" name="name" required="true" v-model="editProject.name" />
+						</div>
+						<div class="ten wide field">
+							<label>Description</label>
+							<input id="project-description-input" type="text" name="description" required="true" v-model="editProject.description" />
+						</div>
+					</div>
+					<button class="ui button blue" type="submit">Save</button>
+					<button class="ui button" v-on:click="state = ''">Discard</button>
+			  	</form>
 			</div>
 			<div class="right floated three wide column">
 				<button class="ui labeled icon purple button" v-on:click="createStory($event)">
@@ -29,7 +43,6 @@
 
 <script>
 	import storyComponent from './story.vue';
-	import editFormComponent from './editForm.vue';
 	import editMenuComponent from './editMenu.vue';
 
 	var storyData = [
@@ -38,6 +51,7 @@
 	];
 
 	export default {
+		props: ['project'],
 		components: {
 			'Story': storyComponent,
 			'EditMenu': editMenuComponent
@@ -45,7 +59,8 @@
 		data: function() {
 			return {
 				state: '',
-				stories: []
+				stories: [],
+				editProject: this.project
 			};
 		},
 		computed: {
@@ -79,7 +94,19 @@
 				}
 			},
 			edit: function(event) {
-				console.log('project edit');
+				this.state = 'edit';
+
+				this.editProject = {
+					id: this.project.id,
+					name: this.project.name,
+					description: this.project.description
+				};
+			},
+			update: function(event) {
+				this.state = '';
+
+				this.project.name = this.editProject.name;
+				this.project.description = this.editProject.description;
 			},
 			destroy: function(event) {
 				console.log('project delete');
