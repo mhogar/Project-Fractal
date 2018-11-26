@@ -38,6 +38,8 @@
 </style>
 
 <script>
+	const Api = require('../api/taskApi');
+
 	import editMenuComponent from './editMenu.vue';
 	import editFormComponent from './editForm.vue';
 
@@ -57,6 +59,8 @@
 			toggleDone: function (event) {
 				this.task.completed = !this.task.completed;
 				this.$parent.updateProgressBar();
+
+				Api.createOrUpdateTask(this.task);
 			},
 			edit: function(event) {
 				if (this.state === 'create') {
@@ -74,9 +78,12 @@
 				this.state = '';
 
 				this.task.name = this.editTask.name;
+
+				Api.createOrUpdateTask(this.task);
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromTasks(this.task.id);
+				Api.deleteTask(this.task.id);
 			}
 		}
 	};
