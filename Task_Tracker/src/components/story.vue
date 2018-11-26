@@ -16,7 +16,7 @@
 				<div class="right floated four wide column">
 					<div class="ui purple progress" v-if="numTasks > 0">
 					  	<div class="bar completion-bar" v-bind:id="progressBarId"></div>
-			   			<div class="label">{{story.percent}}% Completed</div>
+			   			<div class="label">{{percent}}% Completed</div>
 					</div>
 					<div v-if="numTasks === 0">
 						<span class="ui small header">No Tasks</span>
@@ -31,7 +31,7 @@
 					<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
 				</div>
 				<div class="content active">
-					<Task v-for="task in tasks" :key="task.id" v-bind:task="task"></Task>
+					<Task v-for="task in story.tasks" :key="task.id" v-bind:task="task"></Task>
 					<div class="ui segments">
 						<div class="ui segment new-task" v-on:click="createTask($event)">
 							<i class="plus circle icon"></i> Add a new task
@@ -63,6 +63,8 @@
 </style>
 
 <script>
+	const Api = require('../api/storyApi');
+
 	import editMenuComponent from './editMenu.vue';
 	import editFormComponent from './editForm.vue';
 	import taskComponent from './task.vue';
@@ -82,14 +84,15 @@
 		},
 		data: function() {
 			return {
-				tasks: [],
 				state: this.story.name === '' ? 'create' : '',
-				editStory: this.story
+				editStory: this.story,
+				percent: 0
 			};
 		},
 		computed: {
 			numTasks: function () {
-				return this.tasks ? this.tasks.length : 0;
+				let tasks = this.story.tasks;
+				return tasks ? tasks.length : 0;
 			},
 			progressBarId: function() {
 				return 'story-progress-bar-' + this.story.id;
@@ -124,17 +127,16 @@
 				this.state = '';
 
 				this.story.name = this.editStory.name;
+
+				Api.createOrUpdateStory(this.story);
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromStories(this.story.id);
-			},
-			getTasks: function() {
-				return taskData.filter(task => task.storyId === this.story.id);
+				Api.deleteStory(this.story.id);
 			},
 			createTask: function(event) {
-				let nextId = this.numTasks ? (this.tasks.sort((a, b) => a.id - b.id))[this.numTasks - 1].id + 1 : 0;
 				let task = {
-					id: nextId,
+					id: -1,
 					storyId: this.story.id,
 					name: '',
 					completed: false
@@ -144,26 +146,22 @@
 				this.updateProgressBar();
 			},
 			addToTasks: function(task) {
-				this.tasks.push(task);
+				this.story.tasks.push(task);
 			},
 			deleteFromTasks: function(taskId) {
-				let taskIndex = this.tasks.findIndex(item => item.id === taskId);
+				let taskIndex = this.story.tasks.findIndex(item => item.id === taskId);
 				if (taskIndex !== -1) {
-					let task = this.tasks[taskIndex];
-					this.$delete(this.tasks, taskIndex);
+					this.$delete(this.story.tasks, taskIndex);
 
 					this.updateProgressBar();
 				}
 			},
 			updateProgressBar: function() {
-				this.story.percent = Math.round(this.tasks.filter(task => task.completed === true).length / this.numTasks * 100);
+				this.percent = Math.round(this.story.tasks.filter(task => task.completed === true).length / this.numTasks * 100);
 
 				let progressBar = $('#' + this.progressBarId);
-				progressBar.css('width', this.story.percent + '%');
+				progressBar.css('width', this.percent + '%');
 			}
-		},
-		beforeMount: function() { 
-			this.tasks = this.getTasks();
 		},
 		mounted: function() {
 			this.updateProgressBar();

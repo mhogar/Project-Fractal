@@ -34,10 +34,10 @@
 				<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="deleteConfirmLevel" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
 			</div>
 		</div>
-		<h2 class="ui center aligned header" id="no-stories-message" v-if="!stories.length">
+		<h2 class="ui center aligned header" id="no-stories-message" v-if="!project.stories.length">
 		  <span class="sub header">You don't have any stories yet. Create some.</span>
 		</h2>
-		<Story v-for="story in stories" :key="story.id" v-bind:story="story"></Story>
+		<Story v-for="story in project.stories" :key="story.id" v-bind:story="story"></Story>
 		<button class="ui labeled icon teal button" id="back-button" v-on:click="goBackToProjectSelect()">
 			<i class="ui icon arrow left"></i> Back
 		</button>
@@ -59,16 +59,13 @@
 </style>
 
 <script>
+	const Api = require('../api/projectApi');
+
 	import storyComponent from './story.vue';
 	import editMenuComponent from './editMenu.vue';
 
-	var storyData = [
-		{ id: 1, name: "Story", percent: 0},
-		{ id: 2, name: "Story 2", percent: 0}
-	];
-
 	export default {
-		props: ['project'],
+		props: ['projectId'],
 		components: {
 			'Story': storyComponent,
 			'EditMenu': editMenuComponent
@@ -76,13 +73,14 @@
 		data: function() {
 			return {
 				state: '',
-				stories: [],
-				editProject: this.project
+				project: {},
+				editProject: {}
 			};
 		},
 		computed: {
 			numStories: function () {
-				return this.stories ? this.stories.length : 0;
+				let stories = this.project.stories;
+				return stories ? stories.length : 0;
 			},
 			deleteConfirmLevel: function() {
 				let DELETE_CONFIRM_LEVEL = editMenuComponent.data().DELETE_CONFIRM_LEVEL;
@@ -98,29 +96,29 @@
 			}
 		},
 		methods: {
-			getStories: function() {
-				return storyData;
+			loadProject: function() {
+				return Api.getProjectById(this.projectId);
 			},
 			createStory: function(event) {
-				let nextId = this.stories.length ? (this.stories.sort((a, b) => a.id - b.id))[this.stories.length - 1].id + 1 : 0;
 				let story = {
-					id: nextId,
+					id: -1,
+					projectId: this.projectId,
 					name: '',
 					percent: 0
 				};
 
-				this.stories.push(story);
+				this.project.stories.push(story);
 
 				window.scrollTo(0, document.body.scrollHeight);
 			},
 			deleteFromStories: function(storyId) {
-				let index = this.stories.findIndex(item => item.id === storyId);
+				let index = this.project.stories.findIndex(item => item.id === storyId);
 				if (index !== -1) {
-					this.$delete(this.stories, index);
+					this.$delete(this.project.stories, index);
 				}
 			},
 			goBackToProjectSelect: function() {
-				this.$parent.deselectProject();
+				this.$parent.showView();
 			},
 			edit: function(event) {
 				this.state = 'edit';
@@ -136,14 +134,18 @@
 
 				this.project.name = this.editProject.name;
 				this.project.description = this.editProject.description;
+
+				Api.updateProject(this.project);
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromProjects(this.project.id);
+				Api.deleteProject(this.project.id);
+
 				this.goBackToProjectSelect();
 			}
 		},
 		beforeMount: function() {
-			this.stories = this.getStories();
+			this.project = this.loadProject();
 		}
 	};
 </script>
