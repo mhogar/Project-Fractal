@@ -104,7 +104,7 @@
 					id: -1,
 					projectId: this.projectId,
 					name: '',
-					percent: 0
+					tasks: []
 				};
 
 				this.project.stories.push(story);

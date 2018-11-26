@@ -128,7 +128,8 @@
 
 				this.story.name = this.editStory.name;
 
-				Api.createOrUpdateStory(this.story);
+				let newStory = Api.createOrUpdateStory(this.story);
+				this.story.id = newStory.id;
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromStories(this.story.id);

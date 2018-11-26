@@ -64,10 +64,14 @@ export function getProjectById(id) {
 }
 
 export function createProject(project) {
-	project.id = nextId();
-	projectData.push(project);
+	let localProject = {};
+	localProject.id = nextId();
+	localProject.name = project.name;
+	localProject.description = project.description;
 
-	return project;
+	projectData.push(localProject);
+
+	return localProject;
 }
 
 export function updateProject(project) {

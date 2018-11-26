@@ -17,21 +17,23 @@ export function getTasksByStoryId(storyId) {
 }
 
 export function createOrUpdateTask(task) {
+	let localTask = {};
+	localTask.id = task.id;
+	localTask.storyId = task.storyId;
+	localTask.name = task.name;
+	localTask.completed = task.completed;
+	
 	//create
-	if (task.id === -1) {
-		task.id = nextId();
-		taskData.push(task);
+	if (localTask.id === -1) {
+		localTask.id = nextId();
+		taskData.push(localTask);
 
-		return task;
+		return localTask;
 	}
 
-	let index = findTask(task.id);
+	let index = findTask(localTask.id);
 	if (index !== -1) {
-		let localTask = {};
-		localTask.id = task.id;
-		localTask.storyId = task.storyId;
-		localTask.name = task.name;
-		localTask.completed = task.completed;
+		
 
 		taskData[index] = localTask;
 

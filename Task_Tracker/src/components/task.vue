@@ -60,7 +60,9 @@
 				this.task.completed = !this.task.completed;
 				this.$parent.updateProgressBar();
 
-				Api.createOrUpdateTask(this.task);
+				if (this.state !== 'create') {
+					Api.createOrUpdateTask(this.task);
+				}
 			},
 			edit: function(event) {
 				if (this.state === 'create') {
@@ -79,7 +81,8 @@
 
 				this.task.name = this.editTask.name;
 
-				Api.createOrUpdateTask(this.task);
+				let newTask = Api.createOrUpdateTask(this.task);
+				this.task.id = newTask.id;
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromTasks(this.task.id);

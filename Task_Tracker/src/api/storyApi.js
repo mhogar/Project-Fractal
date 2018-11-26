@@ -22,25 +22,24 @@ export function getStoriesByProjectId(projectId) {
 
 
 export function createOrUpdateStory(story) {
+	let localStory = {};
+	localStory.id = story.id;
+	localStory.projectId = story.projectId;
+	localStory.name = story.name;
+	localStory.description = story.description;
+
 	//create
-	if (story.id === -1) {
-		story.id = nextId();
+	if (localStory.id === -1) {
+		localStory.id = nextId();
 
-		storyData.push(story);
+		storyData.push(localStory);
 
-		return story;
+		return localStory;
 	}
 
-	let index = findStory(story.id);
-	if (index !== -1) {
-
-		let localStory = {};
-		localStory.id = story.id;
-		localStory.projectId = story.projectId;
-		localStory.name = story.name;
-		localStory.description = story.description;
-
-		storyData[index] = localStory;
+	let index = findStory(localStory.id);
+	if (localStory !== -1) {
+		storyData[localStory] = localStory;
 
 		return localStory;
 	}
