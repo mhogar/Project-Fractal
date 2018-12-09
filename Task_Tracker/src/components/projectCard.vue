@@ -1,12 +1,21 @@
 <template>
 	<div class="ui link raised card" v-on:click="$parent.selectProject(project)">
 		<div class="content">
-			<div class="ui header">
-			  	<i v-bind:class="'icon ' + (project.percent === 100 ? 'check circle green' : 'yellow thumbtack')"></i>
-			  	<div class="content">
-			    	{{project.name}}
-			    	<div class="sub header">{{project.description}}</div>
-			  	</div>
+			<div class="ui grid">
+				<div class="twelve wide column">
+					<div class="ui header">
+					  	<i v-bind:class="'icon ' + (project.percent === 100 ? 'check circle green' : 'yellow thumbtack')"></i>
+					  	<div class="content">
+					    	{{project.name}}
+					    	<div class="sub header">{{project.description}}</div>
+					  	</div>
+					</div>
+				</div>
+				<div class="right floated three wide column" v-if="project.isNew">
+					<div class="ui icon basic circular button" v-on:click.stop="$parent.deleteFromProjects(project.id)">
+						<i class="remove icon"></i>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div class="content">

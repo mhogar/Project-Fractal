@@ -69,12 +69,6 @@
 	import editFormComponent from './editForm.vue';
 	import taskComponent from './task.vue';
 
-	var taskData = [
-		{ id: 1, storyId: 1, name: "Task 1", completed: false },
-		{ id: 2, storyId: 1, name: "Another Task", completed: true },
-		{ id: 3, storyId: 2, name: "One More Task", completed: false }
-	];
-
 	export default {
 		props: ['story'],
 		components: {

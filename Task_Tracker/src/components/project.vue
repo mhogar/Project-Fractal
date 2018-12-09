@@ -139,7 +139,6 @@
 			},
 			destroy: function(event) {
 				this.$parent.deleteFromProjects(this.project.id);
-				Api.deleteProject(this.project.id);
 
 				this.goBackToProjectSelect();
 			}

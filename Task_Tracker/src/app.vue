@@ -54,12 +54,18 @@
 					}
 				);
 
-				this.projects.push(project);
+				this.loadProjects();
+
+				let index = this.projects.findIndex(item => item.id === project.id);
+				if (index !== -1) {
+					this.projects[index].isNew = true;
+				}
 			},
 			deleteFromProjects: function(projectId) {
 				let index = this.projects.findIndex(item => item.id === projectId);
 				if (index !== -1) {
 					this.$delete(this.projects, index);
+					Api.deleteProject(projectId);
 				}
 			}
 		},

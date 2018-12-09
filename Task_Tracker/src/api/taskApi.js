@@ -4,6 +4,8 @@ var taskData = [
 	{ id: 3, storyId: 2, name: "One More Task", completed: false }
 ];
 
+var changeBuffer = {};
+
 function nextId() {
 	return taskData ? (taskData.sort((a, b) => a.id - b.id))[taskData.length - 1].id + 1 : 0;
 }
@@ -26,6 +28,7 @@ export function createOrUpdateTask(task) {
 	//create
 	if (localTask.id === -1) {
 		localTask.id = nextId();
+		localTask.isNew = true;
 		taskData.push(localTask);
 
 		return localTask;

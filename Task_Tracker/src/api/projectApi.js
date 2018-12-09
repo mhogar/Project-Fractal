@@ -93,6 +93,6 @@ export function updateProject(project) {
 export function deleteProject(projectId) {
 	let index = findProject(projectId);
 	if (index !== -1) {
-		delete projectData[index];
+		projectData.splice(index, 1);
 	}
 }
