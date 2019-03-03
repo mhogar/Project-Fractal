@@ -1,32 +1,41 @@
 <template>
 	<div class="story-segment ui segments">
 		<div class="story-segment-header ui purple segment">
+			<div v-if="loading" class="ui active inverted dimmer">
+				<div class="ui loader"></div>
+			</div>
 			<div class="ui grid">
 				<div class="left floated eleven wide column">
-					<div v-if="state === ''">
-						<i class="tasks icon"></i> <span class="ui header">{{story.name}}</span>
-					</div>
-					<EditForm v-if="state !== ''"
-						v-bind:saveFunc="function(event) { state !== '' && update(event) }"
-						v-bind:discardFunc="function(event) {state === 'create' ? destroy(event) : state = ''}"
-						v-bind:model="editStory"
-						v-bind:id_name="'story-name-input-'">
-					</EditForm>
+					<h3 v-if="state === ''" class="ui header">
+						<i class="tasks icon"></i> 
+						<div class="content">{{story.name}}</div>
+					</h3>
+					<form v-else class="ui form" v-on:submit.prevent="">
+						<div class="ui input fluid action">
+							<input type="text" name="name" v-model="editStory.name" v-bind:id="nameInputId" />
+							<button class="ui button blue" v-on:click="onSave($event)">Save</button>
+							<button class="ui button" v-on:click="onDiscard($event)">Discard</button>
+						</div>
+					</form>
 				</div>
 				<div class="right floated four wide column">
 					<div class="ui purple progress" v-if="numTasks > 0">
 					  	<div class="bar completion-bar" v-bind:id="progressBarId"></div>
-			   			<div class="label">{{percent}}% Completed</div>
+			   			<div class="label">{{percent}}% Completed; {{completedTimeEstimate}}/{{totalTimeEsitmate}} h</div>
 					</div>
 					<div v-if="numTasks === 0">
 						<span class="ui small header">No Tasks</span>
 					</div>
 				</div>
 				<div class="one wide column">
-					<EditMenu v-bind:editFunc="edit" v-bind:deleteFunc="destroy" v-bind:confirmDelete="deleteConfirmLevel" v-bind:confirmDeleteMessage="deleteConfirmMessage"></EditMenu>
+					<EditMenu v-if="state !== 'create'"
+						v-bind:editFunc="edit" 
+						v-bind:deleteFunc="destroy" 
+						v-bind:options="{ confirmDelete: deleteConfirmLevel, confirmDeleteMessage: deleteConfirmMessage, menuPointDir: 'top right' }">
+					</EditMenu>
 				</div>
 			</div>
-			<div class="ui accordion task-list">
+			<div v-if="state !== 'create'" class="ui accordion task-list">
 				<div class="title active">
 					<i class="dropdown icon"></i> <span class="ui sub header">toggle task list</span>
 				</div>
@@ -66,27 +75,48 @@
 	const Api = require('../api/storyApi');
 
 	import editMenuComponent from './editMenu.vue';
-	import editFormComponent from './editForm.vue';
 	import taskComponent from './task.vue';
+
+	import {requiredValidator, stringValidator} from '../mixins/formValidator.js'
 
 	export default {
 		props: ['story'],
+		mixins: [requiredValidator, stringValidator],
 		components: {
 			'Task': taskComponent,
-			'EditMenu': editMenuComponent,
-			'EditForm': editFormComponent
+			'EditMenu': editMenuComponent
 		},
 		data: function() {
 			return {
+				loading: false,
 				state: this.story.name === '' ? 'create' : '',
 				editStory: this.story,
 				percent: 0
 			};
 		},
 		computed: {
+			nameInputId: function() {
+				return 'story-name-input-' + this.story.id;
+			},
+			validateName: function() {
+				let id = this.nameInputId;
+				let field = this.editStory.name;
+
+				return this.validateRequired(id, field) && this.validateString(id, field, storyConfig.minNameLength, storyConfig.maxNameLength);
+			},
 			numTasks: function () {
 				let tasks = this.story.tasks;
 				return tasks ? tasks.length : 0;
+			},
+			totalTimeEsitmate: function() {
+				let totalTime = 0;
+				this.story.tasks.filter((task) => totalTime += task.timeEstimate);
+				return totalTime;
+			},
+			completedTimeEstimate: function() {
+				let completedTime = 0;
+				this.story.tasks.filter((task) => completedTime += (task.completed ? task.timeEstimate : 0));
+				return completedTime;
 			},
 			progressBarId: function() {
 				return 'story-progress-bar-' + this.story.id;
@@ -109,6 +139,18 @@
 			}
 		},
 		methods: {
+			onSave: function(event) {
+				if (this.validateName) {
+					this.update(event);
+				}
+			},
+			onDiscard: function(event) {
+				if (this.state === 'create') {
+					this.$parent.deleteFromStories(this.story.id);
+				}
+
+				this.state = '';
+			},
 			edit: function(event) {
 				this.state = 'edit';
 
@@ -122,19 +164,39 @@
 
 				this.story.name = this.editStory.name;
 
-				let newStory = Api.createOrUpdateStory(this.story);
-				this.story.id = newStory.id;
+				this.loading = true;
+				Api.createOrUpdateStory(
+					this.story,
+					function(data) {
+						let newStory = data;
+						this.story.id = newStory.id;
+						this.loading = false;
+					}.bind(this),
+					function(error) {
+						console.log(error);
+					}
+				);
 			},
 			destroy: function(event) {
-				this.$parent.deleteFromStories(this.story.id);
-				Api.deleteStory(this.story.id);
+				this.loading = true;
+				Api.deleteStory(
+					this.story.id,
+					function(response) {
+						this.$parent.deleteFromStories(this.story.id);
+						this.loading = false;
+					}.bind(this),
+					function(error) {
+						console.log(error);
+					}
+				);
 			},
 			createTask: function(event) {
 				let task = {
 					id: -1,
 					storyId: this.story.id,
 					name: '',
-					completed: false
+					completed: false,
+					timeEstimate: 0
 				};
 
 				this.addToTasks(task);
@@ -152,7 +214,7 @@
 				}
 			},
 			updateProgressBar: function() {
-				this.percent = Math.round(this.story.tasks.filter(task => task.completed === true).length / this.numTasks * 100);
+				this.percent = Math.round(this.completedTimeEstimate / this.totalTimeEsitmate * 100);
 
 				let progressBar = $('#' + this.progressBarId);
 				progressBar.css('width', this.percent + '%');

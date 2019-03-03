@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<div class="left floated one wide column">
-			<div class="ui left pointing dropdown icon button blue edit-menu">
+			<div v-bind:class="options.menuPointDir + ' ui pointing dropdown icon button blue edit-menu'">
 			  	<i class="icon ellipsis horizontal"></i>
 			  	<div class="menu">
 			  		<div class="item" v-on:click="editFunc($event)">
@@ -10,12 +10,12 @@
 		  			<div class="item" v-on:click="deleteClicked($event)">
 		  				<i class="delete icon"></i> Delete
 	  				</div>
-					</div>
+				</div>
 		  	</div>
 		</div>
 		<div class="ui small basic modal" v-bind:id="confirmDeleteNormalModalId">
 			<div class="content">
-				<h3>{{confirmDeleteMessage}}</h3>
+				<h3>{{options.confirmDeleteMessage}}</h3>
 		  	</div>
 		  	<div class="actions">
 				<div class="ui red ok inverted button" v-on:click="deleteFunc($event)">
@@ -28,7 +28,7 @@
 		</div>
 		<div class="ui small basic modal" v-bind:id="confirmDeleteExtraModalId">
 			<div class="content">
-				<h3>{{confirmDeleteMessage}}</h3>
+				<h3>{{options.confirmDeleteMessage}}</h3>
 				<div class="ui inverted form">
 					<h4>Enter the {{confirmDeleteStringLength}} digit code to confirm delete: {{confirmDeleteString}}</h4>
 					<input type="text" v-on:input="checkDeleteConfrimString($event)" v-bind:id="confirmDeleteExtraInputId" />
@@ -62,7 +62,7 @@
 			};
 		},
 		mixins: [uidManager],
-		props: ['editFunc', 'deleteFunc', 'confirmDelete', 'confirmDeleteMessage'],
+		props: ['editFunc', 'deleteFunc', 'options'],
 		computed: {
 			confirmDeleteNormalModalId: function() {
 				return 'confirm-delete-normal-modal-' + this.uid;
@@ -79,7 +79,7 @@
 		},
 		methods: {
 			deleteClicked: function(event) {
-				switch (this.confirmDelete) {
+				switch (this.options.confirmDelete) {
 					case this.DELETE_CONFIRM_LEVEL.NORMAL:
 						$('#' + this.confirmDeleteNormalModalId).modal('show');
 						break;
